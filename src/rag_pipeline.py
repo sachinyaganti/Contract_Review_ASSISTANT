@@ -20,7 +20,6 @@ from src.vector_store import (
 )
 
 from src.retriever import retrieve_chunks
-
 from src.llm import generate_answer
 
 
@@ -29,11 +28,8 @@ class ContractRAG:
     def __init__(self):
 
         self.text = ""
-
         self.chunks = []
-
         self.embeddings = None
-
         self.index = None
 
     #####################################################
@@ -88,10 +84,16 @@ class ContractRAG:
         top_k=5
     ):
 
-        return retrieve_chunks(
-            question,
-            top_k
-        )
+        try:
+
+            return retrieve_chunks(
+                question,
+                top_k
+            )
+
+        except FileNotFoundError:
+
+            return []
 
     #####################################################
     # AI Answer
@@ -108,13 +110,19 @@ class ContractRAG:
             top_k
         )
 
-        context = ""
+        if len(retrieved) == 0:
 
-        for item in retrieved:
+            return {
 
-            context += item["text"]
+                "answer":
+                "Please upload and process a contract before asking questions.",
 
-            context += "\n\n"
+                "retrieved_chunks": []
+            }
+
+        context = "\n\n".join(
+            item["text"] for item in retrieved
+        )
 
         answer = generate_answer(
             context,

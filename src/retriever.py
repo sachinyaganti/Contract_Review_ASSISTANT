@@ -5,10 +5,12 @@ Handles semantic retrieval from the FAISS vector database.
 """
 
 from src.embedding_generator import generate_embeddings
+
 from src.vector_store import (
     load_index,
     load_chunks,
-    search
+    search,
+    database_exists
 )
 
 
@@ -16,27 +18,22 @@ class ContractRetriever:
 
     def __init__(self):
 
-        self.index = load_index()
+        if database_exists():
 
-        self.chunks = load_chunks()
+            self.index = load_index()
+
+            self.chunks = load_chunks()
+
+        else:
+
+            self.index = None
+
+            self.chunks = []
 
     def retrieve(self, query, top_k=5):
-        """
-        Retrieve the most relevant chunks.
 
-        Parameters
-        ----------
-        query : str
-            User question.
-
-        top_k : int
-            Number of chunks to retrieve.
-
-        Returns
-        -------
-        list
-            Retrieved chunks with distance score.
-        """
+        if self.index is None:
+            return []
 
         query_embedding = generate_embeddings([query])[0]
 
@@ -66,18 +63,8 @@ class ContractRetriever:
         return results
 
 
-retriever = ContractRetriever()
+def retrieve_chunks(query, top_k=5):
 
+    retriever = ContractRetriever()
 
-def retrieve_chunks(
-    query,
-    top_k=5
-):
-    """
-    Simple wrapper function.
-    """
-
-    return retriever.retrieve(
-        query,
-        top_k
-    )
+    return retriever.retrieve(query, top_k)
